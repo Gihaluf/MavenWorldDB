@@ -4,23 +4,31 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
-import atlantafx.base.theme.PrimerLight;
+import DB.Database_connection;
+import Operations.SelectOperation;
+import Operations.ViewManager;
+import atlantafx.base.theme.PrimerDark;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
+import javafx.scene.image.Image;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import DB.Database_connection;
-import Operations.*;
-
-public class WorldDBApp extends Application{
+public class WorldDBApp extends Application {
 	private Connection con;
-	private TableView<ObservableList<String>> table = new TableView<>();
+	private TableView<ObservableList<String>> table = 
+			new TableView<>();
 	
-	private ComboBox<String> tableSelector = new ComboBox<>();
+	private ComboBox<String> tableSelector 
+	= new ComboBox<>();
 	
 	private List<String> currentColumns = new ArrayList<>();
 	private List<String> databaseView = new ArrayList<>();
@@ -32,46 +40,73 @@ public class WorldDBApp extends Application{
 	
 	
 	@Override
-	public void start(Stage stage){
-		Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());	
+	public void start(Stage stage) {
+		Application.setUserAgentStylesheet(
+				new PrimerDark().getUserAgentStylesheet());
 		
-		//PrimerDark(), NordDard()
-		
+		/* PrimerDark(), NordDark()*/
 		try {
 			con = Database_connection.getConnection();
-			//databaseView = ViewManager.getDatabaseViews(con);
+			databaseView = ViewManager.getDatabaseViews(con);
 			
-		}catch (Exception e) {
+		} catch (Exception e) {
 			showAlert("Savienojuma kļūda: ", e.getMessage());
 			return;
 		}
 		
-		tableSelector.getItems().add("---- TABULAS ----");
-		tableSelector.getItems().addAll("city", "country", "countrylanguage");
+		tableSelector.getItems().add("--- Tabulas ---");
+		// Paši pieliksiet pārējās divas tabulas
+		tableSelector.getItems().addAll("city");
 		
 		if(databaseView.isEmpty()) {
-			tableSelector.getItems().add("---- NAV ATRASTS NEVIENS SKATS ----");
-			
-			showAlert("Informācija",
-					"Nav atrasts neviens skats");
-			
-		}else {
-			tableSelector.getItems().add("---- SKATI ----");
+			tableSelector.getItems().add(
+					"--- NAV ATRASTS NEVIENS SKATS --");
+			showAlert("Informācija", 
+					"Datu bāzē pagaidām nav neviens skats");
+		} else {
+			tableSelector.getItems().add("--- SKATI ---");
 			tableSelector.getItems().addAll(databaseView);
 		}
 		
 		btnSelect.setOnAction(e -> loadData());
+		// Šeit vēl jāturpina mums kopā....
+		
+		tableSelector.getSelectionModel().selectedItemProperty()
+		.addListener((obs, oldVal, newVal) -> {
+			boolean isSeperator = 
+					(newVal == null || newVal.startsWith("---"));
+			btnSelect.setDisable(isSeperator);
+			// Vēlāk jāpieliek pārējās pogas
+		});
+		
+		tableSelector.getSelectionModel().select(1);
+		HBox topBox = new HBox(10, new Label("Tabula/Skats:"), 
+				tableSelector, btnSelect);
+		
+		topBox.setPadding(new Insets(10));
+		
+		// Pēc tam jāuztaisa bottomBox, priekš pārējām pogām
+		
+		VBox root = new VBox(10, topBox, table); // Jāpapildina ar botom
+		stage.setScene(new Scene(root, 900, 600));
+		stage.setTitle("World DB APP");
+		stage.getIcons().add(
+		new Image(getClass().getResourceAsStream("/icon.png")));
+		stage.show();
+		loadData();
 	}
 	
 	private void loadData() {
 		String selectedTable = tableSelector.getValue();
-		if(selectedTable == null || selectedTable.startsWith("----"))
+		if(selectedTable == null || 
+				selectedTable.startsWith("---"))
 			return;
-			
+		
 		try {
-			currentColumns = SelectOperation.populateTable(con, selectedTable, table);
-			
-		}catch(Exception e) {
+			currentColumns = 
+			SelectOperation.populateTable(
+					con, selectedTable, table);
+		} catch(Exception e) {
 			showAlert("Kļūda atlasot datus", e.getMessage());
 		}
 	}
@@ -83,10 +118,8 @@ public class WorldDBApp extends Application{
 		alert.setContentText(msg);
 		alert.showAndWait();
 	}
-	
+
 	public static void main(String[] args) {
 		launch(args);
 	}
-
-
 }
