@@ -4,11 +4,8 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sun.org.apache.xerces.internal.impl.xs.identity.ValueStore;
-
 import DB.Database_connection;
-import Operations.SelectOperation;
-import Operations.ViewManager;
+import Operations.*;
 import atlantafx.base.theme.PrimerDark;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
@@ -61,9 +58,10 @@ public class WorldDBApp extends Application {
 		}
 		
 		tableSelector.getItems().add("--- Tabulas ---");
-		// Paši pieliksiet pārējās divas tabulas
-		tableSelector.getItems().addAll("city");
 		
+		tableSelector.getItems().addAll("city");
+		tableSelector.getItems().addAll("country");
+		tableSelector.getItems().addAll("countrylanguage");
 		if(databaseView.isEmpty()) {
 			tableSelector.getItems().add(
 					"--- NAV ATRASTS NEVIENS SKATS --");
