@@ -10,6 +10,7 @@ import Operations.InsertOperation;
 import Operations.SelectOperation;
 import Operations.UpdateOperation;
 import Operations.ViewManager;
+import Validation.*;
 import atlantafx.base.theme.PrimerDark;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
@@ -195,8 +196,19 @@ public class WorldDBApp extends Application {
 				
 				for(int i=0; i<textFields.size(); i++) {
 					String colName = activeColumns.get(i);
-					String rawValue = textFields.get(i).getText();
-					values.add(rawValue);
+					TextField field = textFields.get(i);
+					
+					try {
+						String value = Inputs.validatePK(colName, field.getText());
+						if(colName.equalsIgnoreCase("Language")) {
+							value = Inputs.maxLenght(value, tableName, 30);
+						}
+						values.add(value);
+						
+					}catch(IllegalArgumentException e) {
+						field.requestFocus();
+						throw e;
+					}
 				}
 				
 				if(isUpdate) {
@@ -222,7 +234,10 @@ public class WorldDBApp extends Application {
 					showAlert("Veiksmīgi!", "Jauns ieraksts ievietots!");
 					loadData();
 				}
-			} catch(Exception e) {
+			} catch(IllegalArgumentException e) {
+				showAlert("Ievades datu kļūda!", e.getMessage());
+				event.consume();	
+			}catch(Exception e) {
 				showAlert("SQL kļūda", e.getMessage());
 				event.consume();	
 			}
@@ -280,10 +295,8 @@ public class WorldDBApp extends Application {
 			try {
 				List<String> validPkValues = new ArrayList<>();
 				for(int i=0; i<pkColumns.size(); i++) {
-					String rawValue = textFields.get(i).getText();
-					if(rawValue.isEmpty()) {
-						throw new IllegalArgumentException("Lauks "+pkColumns.get(i)+" nedrīkst būt tukšs!");
-					}
+					TextField text = textFields.get(i);
+					String rawValue = Inputs.validatePK(pkColumns.get(i), text.getText());
 					validPkValues.add(rawValue);
 				}
 				

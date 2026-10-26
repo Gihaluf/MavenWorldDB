@@ -14,7 +14,7 @@ public class Inputs {
 			int number = Integer.parseInt(cleaned);
 			
 			if(number <= 0) {
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException("Laukā "+fieldName+" jāievieto pozitīvs skaitlis!");
 			}
 			
 			return number;
