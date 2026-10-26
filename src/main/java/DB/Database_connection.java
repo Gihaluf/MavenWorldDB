@@ -14,7 +14,7 @@ public class Database_connection {
 			+ "&useUnicode=true";
 
 	private static final String USER = "root";
-	private static final String PASSWORD = "Dbitenieks601@";
+	private static final String PASSWORD = "Parole1";
 	
 	public static Connection getConnection() throws SQLException{
 		return DriverManager.getConnection(URL, USER, PASSWORD);

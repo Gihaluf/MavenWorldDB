@@ -241,25 +241,29 @@ public class WorldDBApp extends Application {
 		}
 		
 		loadData();
+		
+		boolean isCL = tableName.equalsIgnoreCase("countrylanguage");
+		
+		List<String> pkColumns = new ArrayList<>();
+		List<TextField> textFields = new ArrayList<>();
+		
+		if(isCL) {
+			pkColumns.add("CountryCode");
+			pkColumns.add("Language");
+		}else {
+			pkColumns.add(currentColumns.isEmpty() ? "ID" : currentColumns.get(0));
+		}
+		
 		Alert dialog = new Alert(Alert.AlertType.ERROR);
 		dialog.setTitle("DELETE FROM " + tableName);
-		
 		dialog.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
-		
-		String pkColumn = 
-		currentColumns.isEmpty() ? "ID" : currentColumns.get(0);
 		dialog.setHeaderText(
-				"Ievadi " + pkColumn.toLowerCase() + " lai dzēstu:");
+				"Ievadi atslēgas vērtību, lai dzēstu ierakstu:");
 		
 		GridPane grid = new GridPane();
 		grid.setHgap(10);
 		grid.setVgap(10);
 		grid.setPadding(new Insets(20));
-		List<String> pkColumns = new ArrayList<>();
-		List<TextField> textFields = new ArrayList<>();
-		
-		pkColumns.add(
-				currentColumns.isEmpty() ? "ID" : currentColumns.get(0));
 		
 		for(int i=0; i<pkColumns.size(); i++) {
 			String colName = pkColumns.get(i);
@@ -276,15 +280,22 @@ public class WorldDBApp extends Application {
 			try {
 				List<String> validPkValues = new ArrayList<>();
 				for(int i=0; i<pkColumns.size(); i++) {
-					String columnName = pkColumns.get(i);
 					String rawValue = textFields.get(i).getText();
-					validPkValues.add(rawValue);		
+					if(rawValue.isEmpty()) {
+						throw new IllegalArgumentException("Lauks "+pkColumns.get(i)+" nedrīkst būt tukšs!");
+					}
+					validPkValues.add(rawValue);
 				}
 				
 				int rowsAffected;
 				
-				rowsAffected = DeleteOperation.deleteRecord(
-				con, tableName, pkColumns.get(0), validPkValues.get(0));
+				if(isCL) {
+					rowsAffected = DeleteOperation.deleteRecord(
+							con, tableName, pkColumns.get(0), validPkValues.get(1));
+				}else {
+					rowsAffected = DeleteOperation.deleteRecord(
+							con, tableName, pkColumns.get(0), validPkValues.get(0));
+				}
 				
 				if(rowsAffected > 0) {
 					showAlert("Veiksmīgi dzēsts!", 

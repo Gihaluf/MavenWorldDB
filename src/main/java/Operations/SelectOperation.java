@@ -44,9 +44,11 @@ public class SelectOperation {
 			while(rs.next()) {
 				ObservableList<String> row = FXCollections.observableArrayList();
 				for(int i=1; i<=colCount; i++) {
-					row.add(rs.getString(i)== null ? "" : rs.getString(i));
-					data.add(row);
+					String value = rs.getString(i);
+					row.add(value == null ? "" : value);
+					
 				}
+				data.add(row);
 			}
 			table.setItems(data);
 		}
