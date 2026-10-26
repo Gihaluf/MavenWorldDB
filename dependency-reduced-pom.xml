@@ -19,7 +19,7 @@
         <artifactId>javafx-maven-plugin</artifactId>
         <version>0.0.8</version>
         <configuration>
-          <mainClass>main.Launcher</mainClass>
+          <mainClass>Main.Launcher</mainClass>
         </configuration>
       </plugin>
       <plugin>
@@ -34,7 +34,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>main.Launcher</mainClass>
+                  <mainClass>Main.Launcher</mainClass>
                 </transformer>
               </transformers>
             </configuration>
