@@ -5,7 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import DB.Database_connection;
-import Operations.*;
+import Operations.DeleteOperation;
+import Operations.InsertOperation;
+import Operations.SelectOperation;
+import Operations.UpdateOperation;
+import Operations.ViewManager;
 import atlantafx.base.theme.PrimerDark;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
@@ -58,10 +62,10 @@ public class WorldDBApp extends Application {
 		}
 		
 		tableSelector.getItems().add("--- Tabulas ---");
-		
 		tableSelector.getItems().addAll("city");
 		tableSelector.getItems().addAll("country");
 		tableSelector.getItems().addAll("countrylanguage");
+		
 		if(databaseView.isEmpty()) {
 			tableSelector.getItems().add(
 					"--- NAV ATRASTS NEVIENS SKATS --");
@@ -75,8 +79,7 @@ public class WorldDBApp extends Application {
 		btnSelect.setOnAction(e -> loadData());
 		btnInsert.setOnAction(e -> showInsertUpdateDialog(false));
 		btnUpdate.setOnAction(e -> showInsertUpdateDialog(true));
-		//btnDelete.setOnAction(e -> performDelete());
-		
+		btnDelete.setOnAction(e -> performDelete());
 		
 		tableSelector.getSelectionModel().selectedItemProperty()
 		.addListener((obs, oldVal, newVal) -> {
@@ -94,9 +97,10 @@ public class WorldDBApp extends Application {
 		
 		topBox.setPadding(new Insets(10));
 		
-		HBox bottomBox = new HBox(10, btnInsert, btnUpdate, btnDelete);
+		HBox bottomBox = 
+				new HBox(10, btnInsert, btnUpdate, btnDelete);
 		
-		VBox root = new VBox(10, topBox, table, bottomBox);
+		VBox root = new VBox(10, topBox, table, bottomBox); 
 		stage.setScene(new Scene(root, 900, 600));
 		stage.setTitle("World DB APP");
 		stage.getIcons().add(
@@ -120,33 +124,45 @@ public class WorldDBApp extends Application {
 		}
 	}
 	
+	private void showAlert(String title, String msg) {
+		Alert alert = new Alert(Alert.AlertType.INFORMATION);
+		alert.setTitle(title);
+		alert.setHeaderText(null);
+		alert.setContentText(msg);
+		alert.showAndWait();
+	}
+	
 	private void showInsertUpdateDialog(boolean isUpdate) {
 		String tableName = tableSelector.getValue();
 		if(tableName == null || tableName.startsWith("---"))
 			return;
 		
 		if(databaseView.contains(tableName)) {
-			showAlert("Uzmanbu!", "Izvēlētais objekts ir skats! Datus tajā mainīt un ievietot nevar!");
+			showAlert("Uzmanību!", 
+			"Izvēlētais objekts ir skats! "
+			+ "Datus tajā mainīt un ievietot nevar!");
 			return;
 		}
 		
 		loadData();
 		Alert dialog = new Alert(Alert.AlertType.INFORMATION);
-		dialog.setTitle(isUpdate ? "UPDATE " + tableName : "INSERT "+ tableName);
+		dialog.setTitle(
+		isUpdate ? "UPDATE " + tableName : "INSERT " +tableName);
 		
-		dialog.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+		dialog.getButtonTypes().setAll(
+				ButtonType.OK, ButtonType.CANCEL);
 		
 		if(isUpdate) {
-			dialog.setHeaderText("Aizpildi laukus, lai atjauninātu");
-		}else {
-			dialog.setHeaderText("Aizpildi laukus, lai pievienotu");
+			dialog.setHeaderText("Aizpildi laukus, lai atjauninātu:");
+			
+		} else {
+			dialog.setHeaderText("Aizpildi laukus, lai pievienotu:");
 		}
 		
 		GridPane grid = new GridPane();
 		grid.setHgap(10);
 		grid.setVgap(10);
 		grid.setPadding(new Insets(20));
-		
 		
 		List<String> activeColumns = new ArrayList<>();
 		List<TextField> textFields = new ArrayList<>();
@@ -162,8 +178,8 @@ public class WorldDBApp extends Application {
 			activeColumns.add(colName);
 			grid.add(new Label(colName + ": "), 0, gridRow);
 			TextField tf = new TextField();
-			if(isUpdate && i == 0){
-				tf.setPromptText("Ievadi esošu ID / Valsts kodu");
+			if(isUpdate && i == 0) {
+				tf.setPromptText("Ievadi esošu ID/ Valsts kodu");
 			}
 			textFields.add(tf);
 			grid.add(tf, 1, gridRow);
@@ -171,7 +187,8 @@ public class WorldDBApp extends Application {
 		}
 		
 		dialog.getDialogPane().setContent(grid);
-		Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+		Button okButton = 
+		(Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
 		okButton.addEventFilter(ActionEvent.ACTION, event -> {
 			try {
 				List<String> values = new ArrayList<>();
@@ -180,43 +197,116 @@ public class WorldDBApp extends Application {
 					String colName = activeColumns.get(i);
 					String rawValue = textFields.get(i).getText();
 					values.add(rawValue);
-					
 				}
 				
 				if(isUpdate) {
-					int rowAffected = UpdateOperation.updateRecord(con, tableName, currentColumns, values);
+					int rowAffected = UpdateOperation.updateRecord(
+							con, tableName, currentColumns, values);
 					
-					if(rowAffected > 0) {
-						showAlert("Veiksmīgi!", "Atjaunots ieraksts");
+					if(rowAffected > 0 ) {
+						showAlert("Veiksmīgi", 
+								"Ieraksts tika atjaunināts!");
 						loadData();
-					}else {
-						String pkColumn = currentColumns.get(0);
-						String pkValue = values.get(0);
 					
-						showAlert("Uzmanību", "Ieraksts ar "+ pkColumn+" = "+pkValue+" netika atrasts");
+					} else {
+						String pkColumn =currentColumns.get(0);
+						String pkValue = values.get(0);
+						showAlert("Informācija", "Ieraksts ar " 
+						+pkColumn + " = "+pkValue + " netika atrasts!");
 						event.consume();
 					}
-				}else {
-					InsertOperation.insertRecord(con, tableName, activeColumns, values);
-					
-					showAlert("Veiksmīgi!", "Ievietots ieraksts");
+				
+				} else { 
+					InsertOperation.insertRecord(
+							con, tableName, activeColumns, values);
+					showAlert("Veiksmīgi!", "Jauns ieraksts ievietots!");
+					loadData();
 				}
-			}catch(Exception e) {
+			} catch(Exception e) {
 				showAlert("SQL kļūda", e.getMessage());
-				event.consume();
+				event.consume();	
 			}
 		});
 		dialog.showAndWait();
 	}
 	
-	//DELETE
-	
-	private void showAlert(String title, String msg) {
-		Alert alert = new Alert(Alert.AlertType.INFORMATION);
-		alert.setTitle(title);
-		alert.setHeaderText(null);
-		alert.setContentText(msg);
-		alert.showAndWait();
+	private void performDelete() {
+		String tableName = tableSelector.getValue();
+		if(tableName == null || tableName.startsWith("---"))
+			return;
+		
+		if(databaseView.contains(tableName)) {
+			showAlert("Uzmanību!", "No skata dzēst nedrīkst!");
+			return;
+		}
+		
+		loadData();
+		Alert dialog = new Alert(Alert.AlertType.ERROR);
+		dialog.setTitle("DELETE FROM " + tableName);
+		
+		dialog.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+		
+		String pkColumn = 
+		currentColumns.isEmpty() ? "ID" : currentColumns.get(0);
+		dialog.setHeaderText(
+				"Ievadi " + pkColumn.toLowerCase() + " lai dzēstu:");
+		
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+		grid.setPadding(new Insets(20));
+		List<String> pkColumns = new ArrayList<>();
+		List<TextField> textFields = new ArrayList<>();
+		
+		pkColumns.add(
+				currentColumns.isEmpty() ? "ID" : currentColumns.get(0));
+		
+		for(int i=0; i<pkColumns.size(); i++) {
+			String colName = pkColumns.get(i);
+			grid.add(new Label(colName+": "), 0, i);
+			TextField tf = new TextField();
+			textFields.add(tf);
+			grid.add(tf, 1, i);
+		}
+		
+		dialog.getDialogPane().setContent(grid);
+		Button okButton = 
+		(Button)dialog.getDialogPane().lookupButton(ButtonType.OK);
+		okButton.addEventFilter(ActionEvent.ACTION, event -> {
+			try {
+				List<String> validPkValues = new ArrayList<>();
+				for(int i=0; i<pkColumns.size(); i++) {
+					String columnName = pkColumns.get(i);
+					String rawValue = textFields.get(i).getText();
+					validPkValues.add(rawValue);		
+				}
+				
+				int rowsAffected;
+				
+				rowsAffected = DeleteOperation.deleteRecord(
+				con, tableName, pkColumns.get(0), validPkValues.get(0));
+				
+				if(rowsAffected > 0) {
+					showAlert("Veiksmīgi dzēsts!", 
+							"Ieraksti dzēsti " + rowsAffected);
+					loadData();
+					
+				} else {
+					showAlert("Dzēšana nenotika!", 
+							"Norādītais ieraksts netika atrasts!");
+					event.consume();
+				}
+				
+			} catch (IllegalArgumentException e) {
+				showAlert("Ievades datu kļūda!", e.getMessage());
+				event.consume();
+			
+			}	catch (Exception e) {
+				showAlert("SQL kļūda! ", e.getMessage());
+				event.consume();
+			}
+		});
+		dialog.showAndWait();
 	}
 
 	public static void main(String[] args) {
